@@ -131,11 +131,6 @@ struct Rational{
         if(A.num.isZero()||B.num.isZero()) return Rational(0);
         BigInt n=A.num*B.num; long long d=A.den*B.den; return Rational(n,d);
     }
-    friend Rational mulInt(const Rational&A,long long k){
-        if(k==0||A.num.isZero()) return Rational(0);
-        BigInt n=mulSmall(A.num,(uint64_t)(k<0?-k:k)); if(k<0&&!n.isZero()) n.sign=-n.sign;
-        return Rational(n,A.den);
-    }
 };
 
 // base-b parse
@@ -181,16 +176,23 @@ int main(){
 
     vector<pair<long long,BigInt>> pts;
     for(size_t i=0;i<xs.size();i++){ BigInt y=parseInBase(vals[i],bases[i]); pts.push_back({xs[i],y}); }
-    sort(pts.begin(),pts.end());
+
+    // ✅ FIXED: sort by x only
+    sort(pts.begin(), pts.end(), [](const pair<long long, BigInt>& a, const pair<long long, BigInt>& b){
+        return a.first < b.first;
+    });
 
     vector<long long> X; vector<BigInt> Y;
     for(int i=0;i<k;i++){ X.push_back(pts[i].first); Y.push_back(pts[i].second); }
 
     auto C=lagrange_coeffs(X,Y);
 
-    // ✅ Only print constant term
-    if(C[0].den==1) cout<<C[0].num.toString()<<"\n";
-    else cout<<C[0].num.toString()<<"/"<<C[0].den<<"\n";
+    // ✅ Print constant as integer (divide by denominator if needed)
+    BigInt c0 = C[0].num;
+    if(C[0].den != 1){
+        c0.divSmall((uint32_t)C[0].den);
+    }
+    cout << c0.toString() << "\n";
 
     return 0;
 }
